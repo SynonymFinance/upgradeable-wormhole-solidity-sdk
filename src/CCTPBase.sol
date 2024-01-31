@@ -2,10 +2,11 @@
 
 pragma solidity ^0.8.13;
 
+import "oz/token/ERC20/utils/SafeERC20.sol";
+import {IERC20} from "oz/token/ERC20/IERC20.sol";
 import "./interfaces/IWormholeReceiver.sol";
 import "./interfaces/IWormholeRelayer.sol";
 import "./interfaces/ITokenBridge.sol";
-import {IERC20} from "./interfaces/IERC20.sol";
 import "./interfaces/CCTPInterfaces/ITokenMessenger.sol";
 import "./interfaces/CCTPInterfaces/IMessageTransmitter.sol";
 
@@ -89,7 +90,7 @@ abstract contract CCTPSender is CCTPBase {
         internal
         returns (MessageKey memory)
     {
-        IERC20(USDC).approve(address(circleTokenMessenger), amount);
+        SafeERC20.forceApprove(IERC20(USDC), address(circleTokenMessenger), amount);
         uint64 nonce = circleTokenMessenger.depositForBurnWithCaller(
             amount,
             getCCTPDomain(targetChain),
