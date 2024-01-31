@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import "../src/WormholeRelayerSDK.sol";
 import "../src/interfaces/IWormholeReceiver.sol";
 import "../src/interfaces/IWormholeRelayer.sol";
-import {IERC20} from "oz/token/ERC20/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "../src/testing/WormholeRelayerTest.sol";
 
