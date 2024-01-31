@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./interfaces/IWormholeReceiver.sol";
 import "./interfaces/IWormholeRelayer.sol";
 import "./interfaces/ITokenBridge.sol";
-import {IERC20} from "./interfaces/IERC20.sol";
 
 import "./Utils.sol";
 
@@ -121,7 +122,7 @@ abstract contract TokenSender is TokenBase {
         address targetAddress,
         bytes memory payload
     ) internal returns (VaaKey memory) {
-        IERC20(token).approve(address(tokenBridge), amount);
+        SafeERC20.forceApprove(IERC20(token), address(tokenBridge), amount);
         uint64 sequence = tokenBridge.transferTokensWithPayload{value: wormhole.messageFee()}(
             token, amount, targetChain, toWormholeFormat(targetAddress), 0, payload
         );
