@@ -50,13 +50,13 @@ abstract contract CCTPBase is TokenBase {
     }
 
     function getCCTPDomain(uint16 chain) internal pure returns (uint32) {
-        if (chain == 2) {
+        if (chain == 2 || chain == 10002) {
             return 0;
         } else if (chain == 6) {
             return 1;
-        } else if (chain == 23) {
+        } else if (chain == 23 || chain == 10003) {
             return 3;
-        } else if (chain == 24) {
+        } else if (chain == 24 || chain == 10005) {
             return 2;
         } else {
             revert("Wrong CCTP Domain");

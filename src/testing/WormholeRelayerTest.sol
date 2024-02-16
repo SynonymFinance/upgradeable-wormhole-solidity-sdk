@@ -317,6 +317,39 @@ abstract contract WormholeRelayerTest is Test {
             circleTokenMessenger: ITokenMessenger(0x23A04D5935ed8bC8E3eB78dB3541f0ABfB001c6e),
             USDC: IERC20(0xe05606174bac4A6364B31bd0eCA4bf4dD368f8C6)
         });
+        chainInfosTestnet[10002] = ChainInfo({
+            chainId: 10002,
+            name: "sepolia - ethereum",
+            url: "https://ethereum-sepolia.publicnode.com",
+            relayer: IWormholeRelayer(0x7B1bD7a6b4E61c2a123AC6BC2cbfC614437D0470),
+            tokenBridge: ITokenBridge(0xDB5492265f6038831E89f495670FF909aDe94bd9),
+            wormhole: IWormhole(0x4a8bc80Ed5a4067f1CCf107057b8270E0cC11A78),
+            circleMessageTransmitter: IMessageTransmitter(0x7865fAfC2db2093669d92c0F33AeEF291086BEFD),
+            circleTokenMessenger: ITokenMessenger(0x9f3B8679c73C2Fef8b59B4f3444d4e156fb70AA5),
+            USDC: IERC20(0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238)
+        });
+        chainInfosTestnet[10003] = ChainInfo({
+            chainId: 10003,
+            name: "sepolia - arbitrum",
+            url: "https://arbitrum-sepolia.publicnode.com",
+            relayer: IWormholeRelayer(0x7B1bD7a6b4E61c2a123AC6BC2cbfC614437D0470),
+            tokenBridge: ITokenBridge(0xC7A204bDBFe983FCD8d8E61D02b475D4073fF97e),
+            wormhole: IWormhole(0x6b9C8671cdDC8dEab9c719bB87cBd3e782bA6a35),
+            circleMessageTransmitter: IMessageTransmitter(0xaCF1ceeF35caAc005e15888dDb8A3515C41B4872),
+            circleTokenMessenger: ITokenMessenger(0x9f3B8679c73C2Fef8b59B4f3444d4e156fb70AA5),
+            USDC: IERC20(0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d)
+        });
+        chainInfosTestnet[10005] = ChainInfo({
+            chainId: 10005,
+            name: "sepolia - optimism",
+            url: "https://optimism-sepolia.publicnode.com",
+            relayer: IWormholeRelayer(0x93BAD53DDfB6132b0aC8E37f6029163E63372cEE),
+            tokenBridge: ITokenBridge(0x99737Ec4B815d816c49A385943baf0380e75c0Ac),
+            wormhole: IWormhole(0x31377888146f3253211EFEf5c676D41ECe7D58Fe),
+            circleMessageTransmitter: IMessageTransmitter(0x7865fAfC2db2093669d92c0F33AeEF291086BEFD),
+            circleTokenMessenger: ITokenMessenger(0x9f3B8679c73C2Fef8b59B4f3444d4e156fb70AA5),
+            USDC: IERC20(0x5fd84259d66Cd46123540766Be93DFE6D43130D7)
+        });
 
         chainInfosMainnet[2] = ChainInfo({
             chainId: 2,
