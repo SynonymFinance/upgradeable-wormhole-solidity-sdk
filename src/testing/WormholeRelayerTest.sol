@@ -22,6 +22,7 @@ struct ChainInfo {
     uint16 chainId;
     string name;
     string url;
+    uint256 blockNumber;
     IWormholeRelayer relayer;
     ITokenBridge tokenBridge;
     IWormhole wormhole;
@@ -40,6 +41,7 @@ struct ActiveFork {
     uint16 chainId;
     string name;
     string url;
+    uint256 blockNumber;
     uint256 fork;
     IWormholeRelayer relayer;
     ITokenBridge tokenBridge;
@@ -81,8 +83,8 @@ abstract contract WormholeRelayerTest is Test {
 
         // set default active forks. These can be overridden in your test
         ChainInfo[] memory forks = new ChainInfo[](2);
-        forks[0] = chainInfosTestnet[6]; // fuji avax
-        forks[1] = chainInfosTestnet[14]; // alfajores celo
+        forks[0] = chainInfosMainnet[6]; // avax
+        forks[1] = chainInfosMainnet[23]; // arbitrum
         setActiveForks(forks);
     }
 
@@ -97,6 +99,7 @@ abstract contract WormholeRelayerTest is Test {
             activeForks[chainInfos[i].chainId] = ActiveFork({
                 chainId: chainInfos[i].chainId,
                 url: chainInfos[i].url,
+                blockNumber: chainInfos[i].blockNumber,
                 name: chainInfos[i].name,
                 relayer: chainInfos[i].relayer,
                 tokenBridge: chainInfos[i].tokenBridge,
@@ -125,7 +128,11 @@ abstract contract WormholeRelayerTest is Test {
         for (uint256 i = 0; i < activeForksList.length; ++i) {
             uint16 chainId = activeForksList[i];
             ActiveFork storage fork = activeForks[chainId];
-            fork.fork = vm.createSelectFork(fork.url);
+            if (fork.blockNumber != 0) {
+                fork.fork = vm.createSelectFork(fork.url, fork.blockNumber);
+            } else {
+                fork.fork = vm.createSelectFork(fork.url);
+            }
             fork.guardian = new WormholeSimulator(
                 address(fork.wormhole),
                 DEVNET_GUARDIAN_PK
@@ -233,6 +240,7 @@ abstract contract WormholeRelayerTest is Test {
             chainId: 2,
             name: "goerli - ethereum",
             url: "https://ethereum-goerli.publicnode.com",
+            blockNumber: 0,
             relayer: IWormholeRelayer(0x28D8F1Be96f97C1387e94A53e00eCcFb4E75175a),
             tokenBridge: ITokenBridge(0xF890982f9310df57d00f659cf4fd87e65adEd8d7),
             wormhole: IWormhole(0x706abc4E45D419950511e474C7B9Ed348A4a716c),
@@ -244,6 +252,7 @@ abstract contract WormholeRelayerTest is Test {
             chainId: 6,
             name: "fuji - avalanche",
             url: vm.envOr("AVALANCHE_FUJI_RPC_URL", string("https://api.avax-test.network/ext/bc/C/rpc")),
+            blockNumber: 0,
             relayer: IWormholeRelayer(0xA3cF45939bD6260bcFe3D66bc73d60f19e49a8BB),
             tokenBridge: ITokenBridge(0x61E44E506Ca5659E6c0bba9b678586fA2d729756),
             wormhole: IWormhole(0x7bbcE28e64B3F8b84d876Ab298393c38ad7aac4C),
@@ -255,6 +264,7 @@ abstract contract WormholeRelayerTest is Test {
             chainId: 14,
             name: "alfajores - celo",
             url: vm.envOr("CELO_TESTNET_RPC_URL", string("https://alfajores-forno.celo-testnet.org")),
+            blockNumber: 0,
             relayer: IWormholeRelayer(0x306B68267Deb7c5DfCDa3619E22E9Ca39C374f84),
             tokenBridge: ITokenBridge(0x05ca6037eC51F8b712eD2E6Fa72219FEaE74E153),
             wormhole: IWormhole(0x88505117CA88e7dd2eC6EA1E13f0948db2D50D56),
@@ -266,6 +276,7 @@ abstract contract WormholeRelayerTest is Test {
             chainId: 4,
             name: "bsc testnet",
             url: vm.envOr("BSC_TESTNET_RPC_URL", string("https://bsc-testnet.public.blastapi.io")),
+            blockNumber: 0,
             relayer: IWormholeRelayer(0x80aC94316391752A193C1c47E27D382b507c93F3),
             tokenBridge: ITokenBridge(0x9dcF9D205C9De35334D646BeE44b2D2859712A09),
             wormhole: IWormhole(0x68605AD7b15c732a30b1BbC62BE8F2A509D74b4D),
@@ -277,6 +288,7 @@ abstract contract WormholeRelayerTest is Test {
             chainId: 5,
             name: "polygon mumbai",
             url: vm.envOr("POLYGON_MUMBAI_RPC_URL", string("https://rpc.ankr.com/polygon_mumbai")),
+            blockNumber: 0,
             relayer: IWormholeRelayer(0x0591C25ebd0580E0d4F27A82Fc2e24E7489CB5e0),
             tokenBridge: ITokenBridge(0x377D55a7928c046E18eEbb61977e714d2a76472a),
             wormhole: IWormhole(0x0CBE91CF822c73C2315FB05100C2F714765d5c20),
@@ -288,6 +300,7 @@ abstract contract WormholeRelayerTest is Test {
             chainId: 16,
             name: "moonbase alpha - moonbeam",
             url: vm.envOr("MOONBASE_ALPHA_RPC_URL", string("https://rpc.testnet.moonbeam.network")),
+            blockNumber: 0,
             relayer: IWormholeRelayer(0x0591C25ebd0580E0d4F27A82Fc2e24E7489CB5e0),
             tokenBridge: ITokenBridge(0xbc976D4b9D57E57c3cA52e1Fd136C45FF7955A96),
             wormhole: IWormhole(0xa5B7D85a8f27dd7907dc8FdC21FA5657D5E2F901),
@@ -299,6 +312,7 @@ abstract contract WormholeRelayerTest is Test {
             chainId: 23,
             name: "goerli - arbitrum",
             url: "https://arbitrum-goerli.publicnode.com",
+            blockNumber: 0,
             relayer: IWormholeRelayer(0xAd753479354283eEE1b86c9470c84D42f229FF43),
             tokenBridge: ITokenBridge(0x23908A62110e21C04F3A4e011d24F901F911744A),
             wormhole: IWormhole(0xC7A204bDBFe983FCD8d8E61D02b475D4073fF97e),
@@ -310,6 +324,7 @@ abstract contract WormholeRelayerTest is Test {
             chainId: 24,
             name: "goerli - optimism",
             url: "https://optimism-goerli.publicnode.com",
+            blockNumber: 0,
             relayer: IWormholeRelayer(0x01A957A525a5b7A72808bA9D10c389674E459891),
             tokenBridge: ITokenBridge(0xC7A204bDBFe983FCD8d8E61D02b475D4073fF97e),
             wormhole: IWormhole(0x6b9C8671cdDC8dEab9c719bB87cBd3e782bA6a35),
@@ -321,6 +336,7 @@ abstract contract WormholeRelayerTest is Test {
             chainId: 10002,
             name: "sepolia - ethereum",
             url: "https://ethereum-sepolia.publicnode.com",
+            blockNumber: 0,
             relayer: IWormholeRelayer(0x7B1bD7a6b4E61c2a123AC6BC2cbfC614437D0470),
             tokenBridge: ITokenBridge(0xDB5492265f6038831E89f495670FF909aDe94bd9),
             wormhole: IWormhole(0x4a8bc80Ed5a4067f1CCf107057b8270E0cC11A78),
@@ -332,6 +348,7 @@ abstract contract WormholeRelayerTest is Test {
             chainId: 10003,
             name: "sepolia - arbitrum",
             url: "https://arbitrum-sepolia.publicnode.com",
+            blockNumber: 0,
             relayer: IWormholeRelayer(0x7B1bD7a6b4E61c2a123AC6BC2cbfC614437D0470),
             tokenBridge: ITokenBridge(0xC7A204bDBFe983FCD8d8E61D02b475D4073fF97e),
             wormhole: IWormhole(0x6b9C8671cdDC8dEab9c719bB87cBd3e782bA6a35),
@@ -343,6 +360,7 @@ abstract contract WormholeRelayerTest is Test {
             chainId: 10005,
             name: "sepolia - optimism",
             url: "https://optimism-sepolia.publicnode.com",
+            blockNumber: 0,
             relayer: IWormholeRelayer(0x93BAD53DDfB6132b0aC8E37f6029163E63372cEE),
             tokenBridge: ITokenBridge(0x99737Ec4B815d816c49A385943baf0380e75c0Ac),
             wormhole: IWormhole(0x31377888146f3253211EFEf5c676D41ECe7D58Fe),
@@ -355,6 +373,7 @@ abstract contract WormholeRelayerTest is Test {
             chainId: 2,
             name: "ethereum",
             url: vm.envOr("ETHEREUM_RPC_URL", string("https://rpc.ankr.com/eth")),
+            blockNumber: 19463725,
             relayer: IWormholeRelayer(0x27428DD2d3DD32A4D7f7C497eAaa23130d894911),
             tokenBridge: ITokenBridge(0x3ee18B2214AFF97000D974cf647E7C347E8fa585),
             wormhole: IWormhole(0x98f3c9e6E3fAce36bAAd05FE09d375Ef1464288B),
@@ -366,6 +385,7 @@ abstract contract WormholeRelayerTest is Test {
             chainId: 4,
             name: "bsc",
             url: vm.envOr("BSC_RPC_URL", string("https://bsc-dataseed2.defibit.io")),
+            blockNumber: 0,
             relayer: IWormholeRelayer(0x27428DD2d3DD32A4D7f7C497eAaa23130d894911),
             tokenBridge: ITokenBridge(0xB6F6D86a8f9879A9c87f643768d9efc38c1Da6E7),
             wormhole: IWormhole(0x98f3c9e6E3fAce36bAAd05FE09d375Ef1464288B),
@@ -377,6 +397,7 @@ abstract contract WormholeRelayerTest is Test {
             chainId: 6,
             name: "avalanche",
             url: vm.envOr("AVALANCHE_RPC_URL", string("https://rpc.ankr.com/avalanche")),
+            blockNumber: 43073997,
             relayer: IWormholeRelayer(0x27428DD2d3DD32A4D7f7C497eAaa23130d894911),
             tokenBridge: ITokenBridge(0x0e082F06FF657D94310cB8cE8B0D9a04541d8052),
             wormhole: IWormhole(0x54a8e5f9c4CbA08F9943965859F6c34eAF03E26c),
@@ -388,6 +409,7 @@ abstract contract WormholeRelayerTest is Test {
             chainId: 10,
             name: "fantom",
             url: vm.envOr("FANTOM_RPC_URL", string("https://rpc.ankr.com/fantom")),
+            blockNumber: 0,
             relayer: IWormholeRelayer(0x27428DD2d3DD32A4D7f7C497eAaa23130d894911),
             tokenBridge: ITokenBridge(0x7C9Fc5741288cDFdD83CeB07f3ea7e22618D79D2),
             wormhole: IWormhole(0x126783A6Cb203a3E35344528B26ca3a0489a1485),
@@ -399,6 +421,7 @@ abstract contract WormholeRelayerTest is Test {
             chainId: 13,
             name: "klaytn",
             url: vm.envOr("KLAYTN_RPC_URL", string("https://klaytn-mainnet-rpc.allthatnode.com:8551")),
+            blockNumber: 0,
             relayer: IWormholeRelayer(0x27428DD2d3DD32A4D7f7C497eAaa23130d894911),
             tokenBridge: ITokenBridge(0x5b08ac39EAED75c0439FC750d9FE7E1F9dD0193F),
             wormhole: IWormhole(0x0C21603c4f3a6387e241c0091A7EA39E43E90bb7),
@@ -410,6 +433,7 @@ abstract contract WormholeRelayerTest is Test {
             chainId: 14,
             name: "celo",
             url: vm.envOr("CELO_RPC_URL", string("https://forno.celo.org")),
+            blockNumber: 0,
             relayer: IWormholeRelayer(0x27428DD2d3DD32A4D7f7C497eAaa23130d894911),
             tokenBridge: ITokenBridge(0x796Dff6D74F3E27060B71255Fe517BFb23C93eed),
             wormhole: IWormhole(0xa321448d90d4e5b0A732867c18eA198e75CAC48E),
@@ -421,6 +445,7 @@ abstract contract WormholeRelayerTest is Test {
             chainId: 12,
             name: "acala",
             url: vm.envOr("ACALA_RPC_URL", string("https://eth-rpc-acala.aca-api.network")),
+            blockNumber: 0,
             relayer: IWormholeRelayer(0x27428DD2d3DD32A4D7f7C497eAaa23130d894911),
             tokenBridge: ITokenBridge(0xae9d7fe007b3327AA64A32824Aaac52C42a6E624),
             wormhole: IWormhole(0xa321448d90d4e5b0A732867c18eA198e75CAC48E),
@@ -432,6 +457,7 @@ abstract contract WormholeRelayerTest is Test {
             chainId: 11,
             name: "karura",
             url: vm.envOr("KARURA_RPC_URL", string("https://eth-rpc-karura.aca-api.network")),
+            blockNumber: 0,
             relayer: IWormholeRelayer(0x27428DD2d3DD32A4D7f7C497eAaa23130d894911),
             tokenBridge: ITokenBridge(0xae9d7fe007b3327AA64A32824Aaac52C42a6E624),
             wormhole: IWormhole(0xa321448d90d4e5b0A732867c18eA198e75CAC48E),
@@ -443,6 +469,7 @@ abstract contract WormholeRelayerTest is Test {
             chainId: 16,
             name: "moombeam",
             url: vm.envOr("MOOMBEAM_RPC_URL", string("https://rpc.ankr.com/moonbeam")),
+            blockNumber: 0,
             relayer: IWormholeRelayer(0x27428DD2d3DD32A4D7f7C497eAaa23130d894911),
             tokenBridge: ITokenBridge(0xB1731c586ca89a23809861c6103F0b96B3F57D92),
             wormhole: IWormhole(0xC8e2b0cD52Cf01b0Ce87d389Daa3d414d4cE29f3),
@@ -454,6 +481,7 @@ abstract contract WormholeRelayerTest is Test {
             chainId: 23,
             name: "arbitrum",
             url: vm.envOr("ARBITRUM_RPC_URL", string("https://rpc.ankr.com/arbitrum")),
+            blockNumber: 191751256,
             relayer: IWormholeRelayer(0x27428DD2d3DD32A4D7f7C497eAaa23130d894911),
             tokenBridge: ITokenBridge(0x0b2402144Bb366A632D14B83F244D2e0e21bD39c),
             wormhole: IWormhole(0xa5f208e072434bC67592E4C49C1B991BA79BCA46),
@@ -465,6 +493,7 @@ abstract contract WormholeRelayerTest is Test {
             chainId: 24,
             name: "optimism",
             url: vm.envOr("OPTIMISM_RPC_URL", string("https://rpc.ankr.com/optimism")),
+            blockNumber: 0,
             relayer: IWormholeRelayer(0x27428DD2d3DD32A4D7f7C497eAaa23130d894911),
             tokenBridge: ITokenBridge(0x1D68124e65faFC907325e3EDbF8c4d84499DAa8b),
             wormhole: IWormhole(0xEe91C335eab126dF5fDB3797EA9d6aD93aeC9722),
