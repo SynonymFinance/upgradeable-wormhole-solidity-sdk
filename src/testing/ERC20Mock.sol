@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "../interfaces/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /*
- * ERC20 impl from solmate 
+ * ERC20 impl from solmate
  */
 
 /// @notice Modern and gas efficient ERC20 + EIP-2612 implementation.

@@ -1,23 +1,28 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./interfaces/IWormholeReceiver.sol";
 import "./interfaces/IWormholeRelayer.sol";
 import "./interfaces/ITokenBridge.sol";
-import {IERC20} from "./interfaces/IERC20.sol";
 
 import "./Utils.sol";
 
 abstract contract Base {
-    IWormholeRelayer public immutable wormholeRelayer;
-    IWormhole public immutable wormhole;
+    IWormholeRelayer public wormholeRelayer;
+    IWormhole public wormhole;
 
     mapping(bytes32 => bool) public seenDeliveryVaaHashes;
 
     address registrationOwner;
     mapping(uint16 => bytes32) registeredSenders;
 
-    constructor(address _wormholeRelayer, address _wormhole) {
+    bool internal _wormholeRelayerInitialized;
+
+    function __Base_init(address _wormholeRelayer, address _wormhole) public {
+        require(!_wormholeRelayerInitialized, "WRI");
+        _wormholeRelayerInitialized = true;
         wormholeRelayer = IWormholeRelayer(_wormholeRelayer);
         wormhole = IWormhole(_wormhole);
         registrationOwner = msg.sender;
@@ -53,9 +58,11 @@ abstract contract Base {
 }
 
 abstract contract TokenBase is Base {
-    ITokenBridge public immutable tokenBridge;
+    ITokenBridge public tokenBridge;
 
-    constructor(address _wormholeRelayer, address _tokenBridge, address _wormhole) Base(_wormholeRelayer, _wormhole) {
+    function __TokenBase_init(address _wormholeRelayer, address _tokenBridge, address _wormhole) public {
+        require(!_wormholeRelayerInitialized, "WRI");
+        Base.__Base_init(_wormholeRelayer, _wormhole);
         tokenBridge = ITokenBridge(_tokenBridge);
     }
 
@@ -115,7 +122,7 @@ abstract contract TokenSender is TokenBase {
         address targetAddress,
         bytes memory payload
     ) internal returns (VaaKey memory) {
-        IERC20(token).approve(address(tokenBridge), amount);
+        SafeERC20.forceApprove(IERC20(token), address(tokenBridge), amount);
         uint64 sequence = tokenBridge.transferTokensWithPayload{value: wormhole.messageFee()}(
             token, amount, targetChain, toWormholeFormat(targetAddress), 0, payload
         );
@@ -163,24 +170,6 @@ abstract contract TokenSender is TokenBase {
             targetChain, targetAddress, payload, receiverValue, gasLimit, vaaKeys, refundChain, refundAddress
         );
     }
-
-    function forwardTokenWithPayloadToEvm(
-        uint16 targetChain,
-        address targetAddress,
-        bytes memory payload,
-        uint256 receiverValue,
-        uint256 gasLimit,
-        uint256 forwardMsgValue,
-        address token,
-        uint256 amount
-    ) internal {
-        VaaKey[] memory vaaKeys = new VaaKey[](1);
-        vaaKeys[0] = transferTokens(token, amount, targetChain, targetAddress);
-
-        wormholeRelayer.forwardVaasToEvm{value: forwardMsgValue}(
-            targetChain, targetAddress, payload, receiverValue, gasLimit, vaaKeys
-        );
-    }
 }
 
 abstract contract TokenReceiver is TokenBase {
@@ -198,7 +187,17 @@ abstract contract TokenReceiver is TokenBase {
         bytes32 sourceAddress,
         uint16 sourceChain,
         bytes32 deliveryHash
-    ) external payable {
+    ) external virtual payable {
+        _receiveWormholeMessages(payload, additionalVaas, sourceAddress, sourceChain, deliveryHash);
+    }
+
+    function _receiveWormholeMessages(
+        bytes memory payload,
+        bytes[] memory additionalVaas,
+        bytes32 sourceAddress,
+        uint16 sourceChain,
+        bytes32 deliveryHash
+    ) internal {
         TokenReceived[] memory receivedTokens = new TokenReceived[](additionalVaas.length);
 
         for (uint256 i = 0; i < additionalVaas.length; ++i) {
