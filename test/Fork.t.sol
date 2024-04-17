@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import "../src/WormholeRelayerSDK.sol";
 import "../src/interfaces/IWormholeReceiver.sol";
 import "../src/interfaces/IWormholeRelayer.sol";
-import "../src/interfaces/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "../src/testing/WormholeRelayerTest.sol";
 
@@ -18,7 +18,13 @@ contract Toy is Base {
 
     uint256 public payloadReceived;
 
-    constructor(address _wormholeRelayer, address _wormhole) Base(_wormholeRelayer, _wormhole) {}
+    constructor(address _wormholeRelayer, address _wormhole) {
+        initialize(_wormholeRelayer, _wormhole);
+    }
+
+    function initialize(address _wormholeRelayer, address _wormhole) public {
+        Base.__Base_init(_wormholeRelayer, _wormhole);
+    }
 
     function receiveWormholeMessages(
         bytes memory payload,
@@ -36,10 +42,16 @@ contract Toy is Base {
 }
 
 contract TokenToy is TokenSender, TokenReceiver {
-    constructor (address _wormholeRelayer, address _bridge, address _wormhole) TokenBase(_wormholeRelayer, _bridge, _wormhole) {}
-    
+    constructor(address _wormholeRelayer, address _bridge, address _wormhole) {
+        _initialize(_wormholeRelayer, _bridge, _wormhole);
+    }
+
+    function _initialize(address _wormholeRelayer, address _bridge, address _wormhole) internal {
+        TokenBase.__TokenBase_init(_wormholeRelayer, _bridge, _wormhole);
+    }
+
     uint256 constant GAS_LIMIT = 250_000;
-    
+
     function quoteCrossChainDeposit(uint16 targetChain) public view returns (uint256 cost) {
         // Cost of delivering token and payload to targetChain
         uint256 deliveryCost;
@@ -48,13 +60,11 @@ contract TokenToy is TokenSender, TokenReceiver {
         // Total cost: delivery cost + cost of publishing the 'sending token' wormhole message
         cost = deliveryCost + wormhole.messageFee();
     }
-    
-    function sendCrossChainDeposit(
-        uint16 targetChain,
-        address recipient,
-        uint256 amount,
-        address token
-    ) public payable {
+
+    function sendCrossChainDeposit(uint16 targetChain, address recipient, uint256 amount, address token)
+        public
+        payable
+    {
         uint256 cost = quoteCrossChainDeposit(targetChain);
         require(msg.value == cost, "msg.value must be quoteCrossChainDeposit(targetChain)");
 
@@ -62,11 +72,11 @@ contract TokenToy is TokenSender, TokenReceiver {
 
         bytes memory payload = abi.encode(recipient);
         sendTokenWithPayloadToEvm(
-            targetChain, 
+            targetChain,
             fromWormholeFormat(registeredSenders[targetChain]), // address (on targetChain) to send token and payload to
-            payload, 
+            payload,
             0, // receiver value
-            GAS_LIMIT, 
+            GAS_LIMIT,
             token, // address of IERC20 token contract
             amount
         );
@@ -87,11 +97,11 @@ contract TokenToy is TokenSender, TokenReceiver {
 
         bytes memory payload = abi.encode(recipient);
         sendTokenWithPayloadToEvm(
-            targetChain, 
+            targetChain,
             fromWormholeFormat(registeredSenders[targetChain]), // address (on targetChain) to send token and payload to
-            payload, 
+            payload,
             0, // receiver value
-            GAS_LIMIT, 
+            GAS_LIMIT,
             token, // address of IERC20 token contract
             amount,
             refundChain,
@@ -138,15 +148,18 @@ contract WormholeSDKTest is WormholeRelayerBasicTest {
     function setUpGeneral() public override {
         vm.selectFork(sourceFork);
         tokenToySource.setRegisteredSender(targetChain, toWormholeFormat(address(tokenToyTarget)));
-        
 
         vm.selectFork(targetFork);
         tokenToyTarget.setRegisteredSender(sourceChain, toWormholeFormat(address(tokenToySource)));
+    }
 
+    function testInitializer() public {
+        toyTarget = new Toy(address(relayerTarget), address(wormholeTarget));
+        vm.expectRevert(bytes("WRI"));
+        toyTarget.initialize(address(relayerTarget), address(wormholeTarget));
     }
 
     function testSendMessage() public {
-
         vm.recordLogs();
         (uint256 cost,) = relayerSource.quoteEVMDeliveryPrice(targetChain, 1e17, 100_000);
         relayerSource.sendPayloadToEvm{value: cost}(targetChain, address(toyTarget), abi.encode(55), 1e17, 100_000);
@@ -169,7 +182,6 @@ contract WormholeSDKTest is WormholeRelayerBasicTest {
     }
 
     function testSendToken() public {
-        
         vm.selectFork(sourceFork);
 
         uint256 amount = 19e17;
@@ -182,9 +194,7 @@ contract WormholeSDKTest is WormholeRelayerBasicTest {
         uint256 cost = tokenToySource.quoteCrossChainDeposit(targetChain);
 
         vm.recordLogs();
-        tokenToySource.sendCrossChainDeposit{value: cost}(
-            targetChain, recipient, amount, address(token)
-        );
+        tokenToySource.sendCrossChainDeposit{value: cost}(targetChain, recipient, amount, address(token));
         performDelivery();
 
         vm.selectFork(targetFork);
@@ -193,7 +203,6 @@ contract WormholeSDKTest is WormholeRelayerBasicTest {
     }
 
     function testSendTokenWithRefund() public {
-        
         vm.selectFork(sourceFork);
 
         uint256 amount = 19e17;
