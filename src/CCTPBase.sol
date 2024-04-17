@@ -58,6 +58,8 @@ abstract contract CCTPBase is TokenBase {
             return 3;
         } else if (chain == 24 || chain == 10005) {
             return 2;
+        } else if (chain == 30 || chain == 10004) {
+            return 6;
         } else {
             revert("Wrong CCTP Domain");
         }
